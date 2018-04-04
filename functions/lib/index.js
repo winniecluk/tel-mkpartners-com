@@ -10,20 +10,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+// methods for twilio node package are poorly documented; easier to build own xml string w/ other package
 // import * as twilio from 'twilio';
 const builder = require("xmlbuilder");
 admin.initializeApp();
-// const VoiceResponse = twilio.twiml.VoiceResponse;
-// https://lit-forest-40140.herokuapp.com?SipUser=727@mkpartnerswinnie.sip.us1.twilio.com,728@mkpartnerswinnie.sip.us1.twilio.com,729@mkpartnerswinnie.sip.us1.twilio.com
 // main object that contains object and keys
 const domainName = '@mkpartnerswinnie.sip.us1.twilio.com';
 const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
+// req.query.round currently zero-indexed in twilio interface
+// data structure not decided
 const numberPool = [
-    [{ extension: 727 }, { extension: 728 }],
-    [{ extension: 729 }],
+    [{ sip: `727${domainName}`, number: '12095059520' }],
+    [{ sip: `729${domainName}` }],
     []
 ];
-// do I really need a map? maybe to store user info like name?
+// do I really need a map?
 // const numberMap: object = new Map([
 //     [727, `727${domainName}`]
 //     [728, `728${domainName}`]
@@ -33,14 +34,11 @@ exports.receiveCall = functions.https.onRequest((req, res) => {
     let xmlStr = xmlHeader;
     let xmlBuilder = builder.create('Response');
     const roundNum = req.query.round;
-    console.log('this is the round number:');
-    console.log(req.query);
-    // query param has number
     if (req.query.round) {
         buildXmlStr(xmlBuilder, parseInt(roundNum), 'There are no available numbers in this pool.').then(result => {
-            console.log('this is the xml string');
             xmlStr += result.end();
             xmlStr = xmlStr.replace('<?xml version="1.0"?>', '');
+            console.log('this is the xml string');
             console.log(xmlStr);
             res.send(xmlStr);
             return 'OK';
@@ -52,6 +50,7 @@ exports.receiveCall = functions.https.onRequest((req, res) => {
         buildCustomMessage(xmlBuilder, 'woman', 'Missing query params round.').then(result => {
             xmlStr += result.end();
             xmlStr = xmlStr.replace('<?xml version="1.0"?>', '');
+            console.log('this is the xml string');
             console.log(xmlStr);
             res.send(xmlStr);
             return 'OK';
@@ -65,10 +64,10 @@ function buildXmlStr(xmlBuilder, roundNum, customMessage) {
         if (numberPool[roundNum]
             && numberPool[roundNum].length > 0) {
             const xmlPromise = new Promise((resolve, reject) => {
+                var dialElement = xmlBuilder.ele('Dial');
                 for (let i = 0; i < numberPool[roundNum].length; i++) {
-                    xmlBuilder
-                        .ele('Dial')
-                        .ele('Sip', `${numberPool[roundNum][i]['extension']}${domainName}`);
+                    dialElement.ele('Sip', numberPool[roundNum][i]['sip']);
+                    dialElement.ele('Number', numberPool[roundNum][i]['number']);
                 }
                 resolve(xmlBuilder);
             });

@@ -15,8 +15,8 @@ const xmlHeader: string = '<?xml version="1.0" encoding="UTF-8"?>';
 // req.query.round currently zero-indexed in twilio interface
 // data structure not decided
 const numberPool: object = [
-    [{extension: 727}, {extension: 728}]
-    , [{extension: 729}]
+    [{sip: `727${domainName}`, number: '12095059520'}]
+    , [{sip: `729${domainName}`}]
     , []
 ]
 
@@ -66,10 +66,10 @@ async function buildXmlStr(xmlBuilder: any, roundNum: number, customMessage: str
     if (numberPool[roundNum]
         && numberPool[roundNum].length > 0){
         const xmlPromise = new Promise((resolve, reject) => {
+            var dialElement = xmlBuilder.ele('Dial');
             for (let i = 0; i < numberPool[roundNum].length; i++){
-                xmlBuilder
-                    .ele('Dial')
-                        .ele('Sip', `${numberPool[roundNum][i]['extension']}${domainName}`);
+                dialElement.ele('Sip',numberPool[roundNum][i]['sip']);
+                dialElement.ele('Number',numberPool[roundNum][i]['number']);
             }
             resolve(xmlBuilder);
         });
@@ -100,7 +100,7 @@ function buildCustomMessage(xmlBuilder: any, voice: string, customMessage: strin
 //   Direction: 'inbound',
 //   CallerState: 'CA',
 //   ToZip: '90014',
-//   CallSid: 'CA8e1e0c23c6f3a2c6649edeaa9f0889d9',
+//   CallSid: 'CASID',
 //   To: '+18184235246',
 //   CallerZip: '',
 //   ToCountry: 'US',
@@ -109,7 +109,7 @@ function buildCustomMessage(xmlBuilder: any, voice: string, customMessage: strin
 //   CalledCity: 'LOS ANGELES',
 //   CallStatus: 'ringing',
 //   From: '+13234773647',
-//   AccountSid: 'AC97c8055012f3742758d5e86f6381a8b7',
+//   AccountSid: 'ACSID',
 //   CalledCountry: 'US',
 //   CallerCity: '',
 //   Caller: '+13234773647',
