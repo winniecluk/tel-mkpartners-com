@@ -1,24 +1,26 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+
+// methods for twilio node package are poorly documented; easier to build own xml string w/ other package
 // import * as twilio from 'twilio';
+
 import * as builder from 'xmlbuilder';
 
 admin.initializeApp();
-// const VoiceResponse = twilio.twiml.VoiceResponse;
-
-// https://lit-forest-40140.herokuapp.com?SipUser=727@mkpartnerswinnie.sip.us1.twilio.com,728@mkpartnerswinnie.sip.us1.twilio.com,729@mkpartnerswinnie.sip.us1.twilio.com
 
 // main object that contains object and keys
 const domainName: string = '@mkpartnerswinnie.sip.us1.twilio.com';
 const xmlHeader: string = '<?xml version="1.0" encoding="UTF-8"?>';
 
+// req.query.round currently zero-indexed in twilio interface
+// data structure not decided
 const numberPool: object = [
     [{extension: 727}, {extension: 728}]
     , [{extension: 729}]
     , []
 ]
 
-// do I really need a map? maybe to store user info like name?
+// do I really need a map?
 // const numberMap: object = new Map([
 //     [727, `727${domainName}`]
 //     [728, `728${domainName}`]
@@ -32,15 +34,12 @@ exports.receiveCall = functions.https.onRequest((req, res) => {
     let xmlStr = xmlHeader;
     let xmlBuilder = builder.create('Response');
     const roundNum = req.query.round;
-    console.log('this is the round number:');
-    console.log(req.query);
-    // query param has number
 
     if (req.query.round){
         buildXmlStr(xmlBuilder, parseInt(roundNum), 'There are no available numbers in this pool.').then(result => {
-            console.log('this is the xml string');
             xmlStr += result.end();
             xmlStr = xmlStr.replace('<?xml version="1.0"?>', '');
+            console.log('this is the xml string');
             console.log(xmlStr);
             res.send(xmlStr);
             return 'OK';
@@ -52,6 +51,7 @@ exports.receiveCall = functions.https.onRequest((req, res) => {
         buildCustomMessage(xmlBuilder, 'woman', 'Missing query params round.').then(result => {
             xmlStr += result.end();
             xmlStr = xmlStr.replace('<?xml version="1.0"?>', '');
+            console.log('this is the xml string');
             console.log(xmlStr);
             res.send(xmlStr);
             return 'OK';
