@@ -1,3 +1,4 @@
+require('dotenv').config();
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
@@ -10,7 +11,7 @@ admin.initializeApp();
 
 // main object that contains object and keys
 // const selfUrl: string = 'https://us-central1-tel-mkpartners-com.cloudfunctions.net/receiveCall';
-const domainName: string = '@mkpartnerswinnie.sip.us1.twilio.com';
+const domainName: string = process.env.DOMAIN_NAME;
 const xmlHeader: string = '<?xml version="1.0" encoding="UTF-8"?>';
 
 // req.query.round currently zero-indexed in twilio interface
@@ -20,15 +21,6 @@ const numberPool: any = [
     , [{sip: `729${domainName}`}]
 ]
 
-// do I really need a map?
-// const numberMap: object = new Map([
-//     [727, `727${domainName}`]
-//     [728, `728${domainName}`]
-// ]);
-
-// method to update the numbers in sip domain
-
-
 exports.recordCallDetails = functions.https.onRequest((req, res) => {
     console.log('recording call details');
     recordEndCall(req);
@@ -37,7 +29,6 @@ exports.recordCallDetails = functions.https.onRequest((req, res) => {
     // DialCallStatus
     // CallerState
     //  CallerZip
-    //
 });
 
 function recordEndCall(req){
@@ -78,6 +69,8 @@ function recordStartCall(body){
 }
 
 exports.receiveCall = functions.https.onRequest((req, res) => {
+    console.log('this is the env var: ');
+    console.log(process.env.DOMAIN_NAME);
     let xmlStr = xmlHeader;
     const xmlBuilder = builder.create('Response');
     // const roundNum = req.query.round;
